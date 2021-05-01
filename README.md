@@ -5,7 +5,7 @@ The project provides machine learning web application with Heroku Deployment.
 
 # Independent Variable
 UCS/BTS Ratio,
-Tunnel Orientiation
+Tunnel Orientiation,
 Punch Penetration Index
 
 # Target Variable
