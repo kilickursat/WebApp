@@ -11,6 +11,8 @@ from sklearn.metrics import r2_score
 from catboost import CatBoostRegressor
 import streamlit as st
 from PIL import Image
+from warnings import filterwarnings
+filterwarnings(action='ignore', category=DeprecationWarning, message='`np.bool` is a deprecated alias')
 
 # Create a title
 st.write("""
