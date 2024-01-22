@@ -10,7 +10,7 @@ from tensorflow.keras.models import load_model
 # Function to load images (adjust the path to where you've saved the images)
 def load_images():
     image_scientist = 'path_to_your_image/Leonardo_Diffusion_XL_An_AI_scientist_with_his_cuttingedge_tec_0.jpg'
-    image_tunnel = 'path_to_your_image/A__high_tech_tunnel_boring_machine_excavates_under_a_city_with_cross_sectional_view_GIF_format__Style-_Anime_seed-0ts-1705818285_idx-0.png'
+    image_tunnel = 'https://github.com/kilickursat/WebApp/blob/main/A__high_tech_tunnel_boring_machine_excavates_under_a_city_with_cross_sectional_view_GIF_format__Style-_Anime_seed-0ts-1705818285_idx-0.png'
     return image_scientist, image_tunnel
 
 # Display images at the top of the main page
