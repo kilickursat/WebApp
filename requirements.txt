@@ -6,3 +6,7 @@ catboost
 openpyxl 
 mxnet-mkl
 numpy
+shap
+tensorflow
+keras
+plotly
