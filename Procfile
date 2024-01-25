@@ -1,2 +1,2 @@
-web: sh setup.sh && streamlit run enhanced.py
+web: sh setup.sh && streamlit run TBM_app.py
 
