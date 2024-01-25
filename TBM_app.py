@@ -1,114 +1,101 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Apr 27 17:08:37 2021
-@author: KURSAT
-"""
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score
-from catboost import CatBoostRegressor
 import streamlit as st
-from PIL import Image
-from warnings import filterwarnings
-filterwarnings(action='ignore', category=DeprecationWarning, message='`np.bool` is a deprecated alias')
+import pandas as pd
+import plotly.express as px
+import shap
+import joblib
+from tensorflow.keras.models import load_model
 
-# Create a title
-st.write("""
-# Prediction of TBM Penetration Rate 
-  
-Decide penetration rate based on rock properties using machine learning and python !!!
-""")
+# Assuming you've already set up the rest of your Streamlit imports and model loading...
 
-# Web Application Logo
-image = Image.open('Tunel-Acma-Makineleri.jpg')
-st.image(image, width=500)
+# Function to load images (adjust the path to where you've saved the images)
+def load_images():
+    image_scientist = 'https://github.com/kilickursat/WebApp/blob/main/Leonardo_Diffusion_XL_An_AI_scientist_with_his_cuttingedge_tec_1.jpg'
+    image_tunnel = 'https://github.com/kilickursat/WebApp/blob/main/A__high_tech_tunnel_boring_machine_excavates_under_a_city_with_cross_sectional_view_GIF_format__Style-_Anime_seed-0ts-1705818285_idx-0.png'
+    return image_scientist, image_tunnel
 
-# Read the data
-dt2 = pd.read_excel("TBM_Performance.xlsx", engine='openpyxl')
+# Display images at the top of the main page
+def display_images(image_scientist, image_tunnel):
+    col1, col2 = st.beta_columns([1, 1])
+    with col1:
+        st.image(image_scientist, width=300, caption='AI Scientist')
+    with col2:
+        st.image(image_tunnel, width=300, caption='Tunnel Boring Machine')
 
-dt2["ROCK_PRO"] = dt2["UCS"] / dt2["BTS"]
-
-X = dt2[["UCS", "Fs", "Orientation", "BTS", "PI", "ROCK_PRO"]]
-y = dt2[["ROP"]]
-
-# Set a subheader
-st.subheader("Data Information")
-
-# Show the data as a table
-st.dataframe(dt2)
-
-# Show statistics on the data
-st.write(dt2.describe())
-
-dt2["ROCK_PRO"] = dt2["UCS"] / dt2["BTS"]
-X = pd.DataFrame(np.c_[dt2["ROCK_PRO"], dt2["PI"], dt2["Orientation"]], columns=["ROCK_PRO", "PI", "Orientation"])
-y = dt2[['ROP']]
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=42)
-
-# Sidebar
-# Header of Specify Input Parameters
-st.sidebar.header('Specify Input Parameters')
-st.sidebar.subheader('Please play with the sidebars to create new prediction')
+# Main
+def main():
+    # Display images
+    image_scientist, image_tunnel = load_images()
+    display_images(image_scientist, image_tunnel)
 
 
-def user_input_features():
-    ROCK_PRO = st.sidebar.slider('ROCK_PRO', float(X.ROCK_PRO.min()), float(X.ROCK_PRO.max()), float(X.ROCK_PRO.mean()))
-    PI = st.sidebar.slider('PI', float(X.PI.min()), float(X.PI.max()), float(X.PI.mean()))
-    Orientation = st.sidebar.slider('Orientation', float(X.Orientation.min()), float(X.Orientation.max()),
-                                    float(X.Orientation.mean()))
 
-    data = {'ROCK_PRO': ROCK_PRO,
-            'PI': PI,
-            'Orientation': Orientation
-            }
-    features = pd.DataFrame(data, index=[0])
-    return features
+# Load the trained model and scaler
+model = load_model('path_to_your_saved_model/ann_model.h5')
+scaler = joblib.load('path_to_your_saved_scaler/scaler.pkl')
 
+# Function to scale input features
+def scale_input(input_data, scaler):
+    return scaler.transform(pd.DataFrame([input_data]))
 
-df = user_input_features()
+# Streamlit app layout
+st.title("TBM Penetration Rate Prediction")
 
-SEED = 1
-params = {'loss_function': 'MAPE',  # objective function
-          'eval_metric': 'RMSE',  # metric
-          'learning_rate': 0.02,
-          'verbose': 50,
-          'random_seed': SEED
-          }
+# User input fields
+st.sidebar.header("Input Features")
+# Example feature, replace with your actual features
+UCS = st.sidebar.number_input('UCS (MPa)', min_value=0.0, max_value=100.0, value=50.0)
+BTS = st.sidebar.number_input('BTS (MPa)', min_value=0.0, max_value=100.0, value=50.0)
+# Add more input fields as per your features
 
-# Print specified input parameters
-st.header('Specify Input Parameters')
-st.write(df)
-st.write('---')
+# Collect inputs
+input_data = {
+    'UCS': UCS,
+    'BTS': BTS,
+    # Add other features here
+}
 
-# Build Regression Model
-model = CatBoostRegressor(**params).fit(X_train, y_train)
+# Load your dataset (replace with your actual dataset)
+df = pd.read_excel('path_to_your_dataset/TBM_Performance.xlsx')
 
-# Apply Model to Make Prediction
-st.subheader("Model Test Accuracy Score:")
-predictions = model.predict(df)
-# predictions = model.predict(X_test)
-# r2_score(predictions,y_test).round(2)
+# Split the main screen into left and right
+left_column, right_column = st.beta_columns(2)
 
-st.write(str(r2_score(y_test, model.predict(X_test)) * 100) + "%")
+# Button to make predictions and display plots
+if st.sidebar.button('Predict and Analyze'):
+    # Scale inputs
+    scaled_input = scale_input(input_data, scaler)
 
-# PREDICTION
-st.write("""
-# PREDICTED PENETRATION RATE
-""")
+    # Generate predictions
+    prediction = model.predict(scaled_input)
 
-st.header('Prediction of Penetration Rate')
-st.write(predictions)
-st.write('---')
+    # Display the prediction in the left column
+    left_column.subheader('Predicted Penetration Rate (ROP):')
+    left_column.write(prediction[0][0])
 
-st.set_option('deprecation.showPyplotGlobalUse', False)
+    # SHAP Feature Importance
+    explainer = shap.KernelExplainer(model.predict, shap.sample(scaled_input, 100))
+    shap_values = explainer.shap_values(scaled_input)
+    shap_plot = shap.force_plot(explainer.expected_value[0], shap_values[0], feature_names=list(input_data.keys()))
+    left_column.subheader('SHAP Feature Importance:')
+    left_column.pyplot(shap.force_plot(explainer.expected_value[0], shap_values[0], feature_names=list(input_data.keys())))
 
-fea_imp = pd.DataFrame({'imp': model.feature_importances_, 'col': X.columns})
-fea_imp = fea_imp.sort_values(['imp', 'col'], ascending=[True, False]).iloc[-30:]
-fea_imp.plot(kind='barh', x='col', y='imp', figsize=(10, 7), legend=None)
-plt.title('CatBoost - Feature Importance')
-plt.ylabel('Features')
-plt.xlabel('Importance')
-st.pyplot()
+    # Actual vs Predicted Plot
+    actual = df['Measured ROP (m/h)']
+    predicted = model.predict(scaler.transform(df.drop(columns=['Measured ROP (m/h)', 'Type of rock and descriptions', 'Tunnel stations (m)'])))
+    fig = px.scatter(x=actual, y=predicted.flatten(), labels={'x': 'Actual ROP', 'y': 'Predicted ROP'})
+    left_column.subheader('Actual vs Predicted Plot:')
+    left_column.plotly_chart(fig)
+
+# Right column: Show dataframe and example line chart
+right_column.subheader("Dataset Overview")
+right_column.dataframe(df.head())  # Show the first few rows of the dataset
+
+# Example line chart
+if 'some_column' in df.columns:
+    right_column.subheader("Line Chart Example")
+    right_column.line_chart(df['some_column'])
+
+# Make sure to replace placeholder paths and feature names with actual values
+
+if __name__ == '__main__':
+    main()
