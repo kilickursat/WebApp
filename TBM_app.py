@@ -107,7 +107,7 @@ def main():
     # Line chart for UCS (MPa) over the tunnel stations
     if 'UCS (MPa)' in df.columns and 'Tunnel stations (m)' in df.columns:
         right_column.subheader("UCS Trend Over Tunnel Stations")
-        fig_uc = px.line(df, x='Tunnel stations (m)', y='UCS (MPa)', title='UCS (MPa) over Tunnel Stations')
+        fig_uc = px.line(df, x='UCS (MPa)', y='Tunnel stations (m)', title='UCS (MPa) over Tunnel Stations')
         right_column.plotly_chart(fig_uc)
 
     # Clean up the temporary files
