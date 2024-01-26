@@ -74,7 +74,7 @@ def main():
     }
 
     # Load your dataset (replace with your actual dataset)
-    df = pd.read_excel('path_to_your_dataset/TBM_Performance.xlsx')
+    df = pd.read_excel('https://github.com/kilickursat/WebApp/blob/main/TBM_Performance.xlsx')
 
     # Split the main screen into left and right
     left_column, right_column = st.columns(2)
