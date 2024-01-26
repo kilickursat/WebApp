@@ -45,6 +45,8 @@ def display_images(image_scientist, image_tunnel):
 
 # Main function
 def main():
+    st.title("AI-Based Tunnel Boring Machine Performance Prediction")
+    
     # Display images
     image_scientist, image_tunnel = load_images()
     display_images(image_scientist, image_tunnel)
@@ -63,12 +65,8 @@ def main():
     df = pd.read_excel(dataset_path)
     df.drop(columns=['Type of rock and descriptions', 'Measured ROP (m/h)'], inplace=True)
 
-    # Display descriptive statistics of the dataset
-    st.write("Dataset Descriptive Statistics:")
-    st.write(df.describe())
-
     # User input fields
-    st.sidebar.header("Input Features")
+    st.sidebar.title("Input Features")
     input_data = {}
     for column in df.columns:
         if column != 'Tunnel stations (m)':  # Exclude 'Tunnel stations (m)'
@@ -77,38 +75,37 @@ def main():
     # Function to scale input features
     def scale_input(input_data, scaler):
         input_df = pd.DataFrame([input_data], columns=df.columns)
+        input_df = input_df.drop(columns=['Tunnel stations (m)'])  # Exclude 'Tunnel stations (m)'
         return scaler.transform(input_df)
-
-    # Split the main screen into left and right
-    left_column, right_column = st.columns(2)
 
     # Button to make predictions and display plots
     if st.sidebar.button('Predict and Analyze'):
+        st.header('Prediction Result:')
         scaled_input = scale_input(input_data, scaler)
         prediction = model.predict(scaled_input)
-
-        left_column.subheader('Predicted Penetration Rate (ROP):')
-        left_column.write(prediction[0][0])
+        st.write(f'Predicted Penetration Rate (ROP): {prediction[0][0]:.2f} m/h')
 
         explainer = shap.Explainer(model.predict, shap.sample(scaled_input, 100))
         shap_values = explainer.shap_values(scaled_input)
         shap_html = shap.force_plot(explainer.expected_value[0], shap_values[0], feature_names=df.columns, matplotlib=True)
+        st.header('SHAP Values:')
         components.html(shap_html.html(), height=300)
 
         actual = df['Measured ROP (m/h)']
         predicted = model.predict(scaler.transform(df.drop(columns=['Measured ROP (m/h)'])))
         fig = px.scatter(x=actual, y=predicted.flatten(), labels={'x': 'Actual ROP', 'y': 'Predicted ROP'})
-        left_column.subheader('Actual vs Predicted Plot:')
-        left_column.plotly_chart(fig)
+        st.header('Actual vs Predicted Plot:')
+        st.plotly_chart(fig)
 
-    right_column.subheader("Dataset Overview")
-    right_column.dataframe(df.head())
+    st.sidebar.title("Dataset Overview")
+    st.sidebar.write("Dataset Descriptive Statistics:")
+    st.sidebar.write(df.describe())
 
     # Line chart for UCS (MPa) over the tunnel stations
     if 'UCS (MPa)' in df.columns and 'Tunnel stations (m)' in df.columns:
-        right_column.subheader("UCS Trend Over Tunnel Stations")
-        fig_uc = px.line(df, x='UCS (MPa)', y='Tunnel stations (m)', title='UCS (MPa) over Tunnel Stations')
-        right_column.plotly_chart(fig_uc)
+        st.sidebar.subheader("UCS Trend Over Tunnel Stations")
+        fig_uc = px.line(df, x='Tunnel stations (m)', y='UCS (MPa)', title='UCS (MPa) over Tunnel Stations')
+        st.sidebar.plotly_chart(fig_uc)
 
     # Clean up the temporary files
     os.remove(model_path)
