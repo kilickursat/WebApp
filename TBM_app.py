@@ -85,7 +85,7 @@ def main():
         prediction = model.predict(scaled_input)
         st.write(f'Predicted Penetration Rate (ROP): {prediction[0][0]:.2f} m/h')
 
-        explainer = shap.Explainer(model.predict, shap.sample(scaled_input, 100))
+        explainer = shap.KernelExplainer(model.predict, shap.sample(scaled_input, 100))
         shap_values = explainer.shap_values(scaled_input)
         shap_html = shap.force_plot(explainer.expected_value[0], shap_values[0], feature_names=df.columns, matplotlib=True)
         st.header('SHAP Values:')
