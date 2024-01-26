@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import shap
-import streamlit.components.v1 as components
 import joblib
 import requests
 from tensorflow.keras.models import load_model
@@ -10,7 +9,6 @@ from PIL import Image
 import os
 import tempfile
 from io import BytesIO
-
 
 # Function to download a file from a URL and save it temporarily
 def download_file(url, is_model=False, is_excel=False):
@@ -85,14 +83,16 @@ def main():
         st.subheader('Predicted Penetration Rate (ROP):')
         st.write(prediction[0][0])
 
+        # Display SHAP values using force plot
         explainer = shap.KernelExplainer(model.predict, shap.sample(scaled_input, 100))
         shap_values = explainer.shap_values(scaled_input)
-        shap.summary_plot(shap_values, scaled_input, feature_names=FEATURE_NAMES)
+        shap.force_plot(explainer.expected_value, shap_values[0,:], FEATURE_NAMES, matplotlib=True)
 
-    if 'UCS (MPa)' in df.columns and 'Tunnel stations (m)' in df.columns:
-        st.subheader("UCS Trend Over Tunnel Stations")
-        fig_uc = px.line(df, x='Tunnel stations (m)', y='UCS (MPa)', title='UCS (MPa) over Tunnel Stations')
-        st.plotly_chart(fig_uc)
+        # Add Actual vs Predicted Plot
+        actual = df['Measured ROP (m/h)']
+        predicted = model.predict(scaler.transform(df[FEATURE_NAMES]))
+        fig_act_vs_pred = px.scatter(x=actual, y=predicted.flatten(), labels={'x': 'Actual ROP', 'y': 'Predicted ROP'})
+        st.plotly_chart(fig_act_vs_pred)
 
     # Clean up the temporary files
     os.remove(model_path)
