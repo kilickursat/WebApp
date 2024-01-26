@@ -30,7 +30,7 @@ def main():
 
 
 # Load the trained model and scaler
-model = load_model('path_to_your_saved_model/ann_model.h5')
+model = load_model('https://github.com/kilickursat/WebApp/blob/main/ann_model.h5')
 scaler = joblib.load('path_to_your_saved_scaler/scaler.pkl')
 
 # Function to scale input features
