@@ -61,25 +61,22 @@ def main():
     
     # Load the dataset and drop unnecessary columns
     df = pd.read_excel(dataset_path)
-    df.drop(columns=['Type of rock and descriptions', 'Measured ROP (m/h)', 'Tunnel stations (m)'], inplace=True)
+    df.drop(columns=['Type of rock and descriptions', 'Measured ROP (m/h)'], inplace=True)
 
     # Display descriptive statistics of the dataset
     st.write("Dataset Descriptive Statistics:")
     st.write(df.describe())
 
-    # Correct feature names as per the provided dataset
-    FEATURE_NAMES = ['UCS (MPa)', 'BTS (MPa)', 'PSI (kN/mm)', 'DPW (m)', 'Alpha angle (degrees)']
-
     # User input fields
     st.sidebar.header("Input Features")
     input_data = {}
-    for feature in FEATURE_NAMES:
-        input_data[feature] = st.sidebar.number_input(feature, min_value=0.0, max_value=100.0, value=50.0)
+    for column in df.columns:
+        if column != 'Tunnel stations (m)':  # Exclude 'Tunnel stations (m)'
+            input_data[column] = st.sidebar.number_input(column, min_value=0.0, max_value=100.0, value=50.0)
 
     # Function to scale input features
     def scale_input(input_data, scaler):
-        # Ensure the order of the features matches the training data
-        input_df = pd.DataFrame([input_data], columns=FEATURE_NAMES)
+        input_df = pd.DataFrame([input_data], columns=df.columns)
         return scaler.transform(input_df)
 
     # Split the main screen into left and right
@@ -95,22 +92,20 @@ def main():
 
         explainer = shap.Explainer(model.predict, shap.sample(scaled_input, 100))
         shap_values = explainer.shap_values(scaled_input)
-        shap_html = shap.force_plot(explainer.expected_value[0], shap_values[0], feature_names=FEATURE_NAMES, matplotlib=True)
+        shap_html = shap.force_plot(explainer.expected_value[0], shap_values[0], feature_names=df.columns, matplotlib=True)
         components.html(shap_html.html(), height=300)
 
         actual = df['Measured ROP (m/h)']
-        predicted = model.predict(scaler.transform(df.drop(columns=['Measured ROP (m/h)', 'Type of rock and descriptions', 'Tunnel stations (m)'])))
+        predicted = model.predict(scaler.transform(df.drop(columns=['Measured ROP (m/h)'])))
         fig = px.scatter(x=actual, y=predicted.flatten(), labels={'x': 'Actual ROP', 'y': 'Predicted ROP'})
         left_column.subheader('Actual vs Predicted Plot:')
         left_column.plotly_chart(fig)
-
-
 
     right_column.subheader("Dataset Overview")
     right_column.dataframe(df.head())
 
     # Line chart for UCS (MPa) over the tunnel stations
-    if 'UCS (MPa)' in df.columns:
+    if 'UCS (MPa)' in df.columns and 'Tunnel stations (m)' in df.columns:
         right_column.subheader("UCS Trend Over Tunnel Stations")
         fig_uc = px.line(df, x='Tunnel stations (m)', y='UCS (MPa)', title='UCS (MPa) over Tunnel Stations')
         right_column.plotly_chart(fig_uc)
