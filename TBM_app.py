@@ -9,7 +9,6 @@ from tensorflow.keras.models import load_model
 from io import BytesIO
 import tempfile
 import os
-import numpy as np
 
 # Function to download a file from a URL and save it temporarily
 def download_file(url, is_model=False, is_excel=False):
@@ -44,29 +43,8 @@ def display_images(image_scientist, image_tunnel):
     with col2:
         st.image(image_tunnel, width=300, caption='Tunnel Boring Machine')
 
-# Define the function to predict using your model
-def predict(input_data):
-    # Preprocess input_data using your scaler if needed
-    # scaled_input = scaler.transform(input_data)
-
-    # Make predictions using your ANN model
-    # predictions = model.predict(scaled_input)
-
-    # For this guide, we'll use random predictions for demonstration
-    predictions = np.random.rand(len(input_data), 1)  # Replace this with actual predictions
-
-    return predictions
-
-# Create a function to explain predictions using KernelExplainer
-def explain_predictions(input_data):
-    explainer = shap.KernelExplainer(predict, shap.sample(input_data, 100))
-    shap_values = explainer.shap_values(input_data)
-    return shap_values
-
 # Main function
 def main():
-    st.title("AI-Based Tunnel Boring Machine Performance Prediction")
-    
     # Display images
     image_scientist, image_tunnel = load_images()
     display_images(image_scientist, image_tunnel)
@@ -78,44 +56,53 @@ def main():
 
     model_path = download_file(model_url, is_model=True)
     model = load_model(model_path)
-    # scaler = joblib.load(download_file(scaler_url))  # Uncomment if you have a scaler
+    scaler = joblib.load(download_file(scaler_url))
     dataset_path = download_file(dataset_url, is_excel=True)
     
     # Load the dataset and drop unnecessary columns
     df = pd.read_excel(dataset_path)
-    df.drop(columns=['Type of rock and descriptions', 'Measured ROP (m/h)'], inplace=True)
+    df.drop(columns=['Type of rock and descriptions', 'Measured ROP (m/h)', 'Tunnel stations (m)'], inplace=True)
+
+    # Display descriptive statistics of the dataset
+    st.write("Dataset Descriptive Statistics:")
+    st.write(df.describe())
+
+    # Correct feature names as per the provided dataset
+    FEATURE_NAMES = ['UCS (MPa)', 'BTS (MPa)', 'PSI (kN/mm)', 'DPW (m)', 'Alpha angle (degrees)']
 
     # User input fields
-    st.sidebar.title("Input Features")
+    st.sidebar.header("Input Features")
     input_data = {}
-    for column in df.columns:
-        if column != 'Tunnel stations (m)':  # Exclude 'Tunnel stations (m)'
-            input_data[column] = st.sidebar.number_input(column, min_value=0.0, max_value=100.0, value=50.0)
+    for feature in FEATURE_NAMES:
+        input_data[feature] = st.sidebar.number_input(feature, min_value=0.0, max_value=100.0, value=50.0)
 
     # Function to scale input features
     def scale_input(input_data, scaler):
-        input_df = pd.DataFrame([input_data], columns=df.columns)
-        input_df = input_df.drop(columns=['Tunnel stations (m)'])  # Exclude 'Tunnel stations (m)'
+        # Ensure the order of the features matches the training data
+        input_df = pd.DataFrame([input_data], columns=FEATURE_NAMES)
         return scaler.transform(input_df)
 
-    # Button to make predictions and display SHAP values
+    # Split the main screen into left and right
+    left_column, right_column = st.columns(2)
+
+    # Button to make predictions and display plots
     if st.sidebar.button('Predict and Analyze'):
-        st.header('Prediction Result:')
-        # scaled_input = scale_input(input_data, scaler)  # Uncomment if you have a scaler
-        scaled_input = pd.DataFrame([input_data], columns=df.columns)  # Use unscaled input for demonstration
-        prediction = predict(scaled_input)
+        scaled_input = scale_input(input_data, scaler)
+        prediction = model.predict(scaled_input)
 
-        st.write(f'Predicted Penetration Rate (ROP): {prediction[0][0]:.2f} m/h')
+        left_column.subheader('Predicted Penetration Rate (ROP):')
+        left_column.write(prediction[0][0])
 
-        # Explain predictions using KernelExplainer
-        shap_values = explain_predictions(scaled_input)
-
-        # Display SHAP values using shap.force_plot
-        shap_html = shap.force_plot(explainer.expected_value[0], shap_values[0], feature_names=df.columns, matplotlib=True)
-        st.header('SHAP Values:')
+        explainer = shap.Explainer(model.predict, shap.sample(scaled_input, 100))
+        shap_values = explainer.shap_values(scaled_input)
+        shap_html = shap.force_plot(explainer.expected_value[0], shap_values[0], feature_names=FEATURE_NAMES, matplotlib=True)
         components.html(shap_html.html(), height=300)
 
-        # ...
+        actual = df['Measured ROP (m/h)']
+        predicted = model.predict(scaler.transform(df.drop(columns=['Measured ROP (m/h)', 'Type of rock and descriptions', 'Tunnel stations (m)'])))
+        fig = px.scatter(x=actual, y=predicted.flatten(), labels={'x': 'Actual ROP', 'y': 'Predicted ROP'})
+        left_column.subheader('Actual vs Predicted Plot:')
+        left_column.plotly_chart(fig)
 
     st.sidebar.title("Dataset Overview")
     st.sidebar.write("Dataset Descriptive Statistics:")
@@ -124,7 +111,7 @@ def main():
     # Line chart for UCS (MPa) over the tunnel stations
     if 'UCS (MPa)' in df.columns and 'Tunnel stations (m)' in df.columns:
         st.sidebar.subheader("UCS Trend Over Tunnel Stations")
-        fig_uc = px.line(df, x='Tunnel stations (m)', y='UCS (MPa)', title='UCS (MPa) over Tunnel Stations')
+        fig_uc = px.line(df, x='UCS (MPa)', y='Tunnel stations (m)', title='UCS (MPa) over Tunnel Stations')
         st.sidebar.plotly_chart(fig_uc)
 
     # Clean up the temporary files
@@ -133,3 +120,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
