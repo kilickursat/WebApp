@@ -67,9 +67,6 @@ def main():
     st.write("Dataset Descriptive Statistics:")
     st.write(df.describe())
 
-    st.sidebar.title("Dataset Overview")
-    st.sidebar.write("Dataset Descriptive Statistics:")
-    st.sidebar.write(df.describe())
 
     # Correct feature names as per the provided dataset
     FEATURE_NAMES = ['UCS (MPa)', 'BTS (MPa)', 'PSI (kN/mm)', 'DPW (m)', 'Alpha angle (degrees)']
