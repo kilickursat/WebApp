@@ -10,12 +10,18 @@ import streamlit as st
 import os
 
 # Function to download a file from a URL and save it temporarily
-def download_file(url, is_model=False):
+def download_file(url, is_model=False, is_excel=False):
     response = requests.get(url)
     response.raise_for_status()
     if is_model:
         # Use a temporary file for model
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.h5')
+        temp_file.write(response.content)
+        temp_file.close()
+        return temp_file.name
+    elif is_excel:
+        # Use a temporary file for Excel
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx')
         temp_file.write(response.content)
         temp_file.close()
         return temp_file.name
@@ -45,13 +51,15 @@ def main():
     # Download and load the trained model and scaler
     model_url = 'https://github.com/kilickursat/WebApp/raw/main/ann_model.h5'
     scaler_url = 'https://github.com/kilickursat/WebApp/raw/main/scaler.pkl'
+    dataset_url = 'https://github.com/kilickursat/WebApp/raw/main/TBM_Performance.xlsx'
 
     model_path = download_file(model_url, is_model=True)
     model = load_model(model_path)
     scaler = joblib.load(download_file(scaler_url))
-    os.remove(model_path)
-
+    dataset_path = download_file(dataset_url, is_excel=True)
     
+    df = pd.read_excel(dataset_path)
+
     # Function to scale input features
     def scale_input(input_data, scaler):
         return scaler.transform(pd.DataFrame([input_data]))
@@ -61,7 +69,6 @@ def main():
 
     # User input fields
     st.sidebar.header("Input Features")
-    # Example feature, replace with your actual features
     UCS = st.sidebar.number_input('UCS (MPa)', min_value=0.0, max_value=100.0, value=50.0)
     BTS = st.sidebar.number_input('BTS (MPa)', min_value=0.0, max_value=100.0, value=50.0)
     # Add more input fields as per your features
@@ -73,47 +80,38 @@ def main():
         # Add other features here
     }
 
-    # Load your dataset (replace with your actual dataset)
-    df = pd.read_excel('https://github.com/kilickursat/WebApp/blob/main/TBM_Performance.xlsx')
-
     # Split the main screen into left and right
     left_column, right_column = st.columns(2)
 
     # Button to make predictions and display plots
     if st.sidebar.button('Predict and Analyze'):
-        # Scale inputs
         scaled_input = scale_input(input_data, scaler)
-
-        # Generate predictions
         prediction = model.predict(scaled_input)
 
-        # Display the prediction in the left column
         left_column.subheader('Predicted Penetration Rate (ROP):')
         left_column.write(prediction[0][0])
 
-        # SHAP Feature Importance
         explainer = shap.KernelExplainer(model.predict, shap.sample(scaled_input, 100))
         shap_values = explainer.shap_values(scaled_input)
         left_column.subheader('SHAP Feature Importance:')
         left_column.pyplot(shap.force_plot(explainer.expected_value[0], shap_values[0], feature_names=list(input_data.keys())))
 
-        # Actual vs Predicted Plot
         actual = df['Measured ROP (m/h)']
         predicted = model.predict(scaler.transform(df.drop(columns=['Measured ROP (m/h)', 'Type of rock and descriptions', 'Tunnel stations (m)'])))
         fig = px.scatter(x=actual, y=predicted.flatten(), labels={'x': 'Actual ROP', 'y': 'Predicted ROP'})
         left_column.subheader('Actual vs Predicted Plot:')
         left_column.plotly_chart(fig)
 
-    # Right column: Show dataframe and example line chart
     right_column.subheader("Dataset Overview")
-    right_column.dataframe(df.head())  # Show the first few rows of the dataset
+    right_column.dataframe(df.head())
 
-    # Example line chart
     if 'some_column' in df.columns:
         right_column.subheader("Line Chart Example")
         right_column.line_chart(df['some_column'])
 
-    # Make sure to replace placeholder paths and feature names with actual values
+    # Clean up the temporary files
+    os.remove(model_path)
+    os.remove(dataset_path)
 
 if __name__ == '__main__':
     main()
