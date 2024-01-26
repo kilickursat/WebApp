@@ -67,6 +67,10 @@ def main():
     st.write("Dataset Descriptive Statistics:")
     st.write(df.describe())
 
+    st.sidebar.title("Dataset Overview")
+    st.sidebar.write("Dataset Descriptive Statistics:")
+    st.sidebar.write(df.describe())
+
     # Correct feature names as per the provided dataset
     FEATURE_NAMES = ['UCS (MPa)', 'BTS (MPa)', 'PSI (kN/mm)', 'DPW (m)', 'Alpha angle (degrees)']
 
@@ -104,9 +108,7 @@ def main():
         left_column.subheader('Actual vs Predicted Plot:')
         left_column.plotly_chart(fig)
 
-    st.sidebar.title("Dataset Overview")
-    st.sidebar.write("Dataset Descriptive Statistics:")
-    st.sidebar.write(df.describe())
+
 
     # Line chart for UCS (MPa) over the tunnel stations
     if 'UCS (MPa)' in df.columns and 'Tunnel stations (m)' in df.columns:
