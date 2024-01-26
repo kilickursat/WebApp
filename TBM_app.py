@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import shap
+import streamlit.components.v1 as components
 import joblib
 import requests
 from tensorflow.keras.models import load_model
@@ -92,10 +93,10 @@ def main():
         left_column.subheader('Predicted Penetration Rate (ROP):')
         left_column.write(prediction[0][0])
 
-        explainer = shap.KernelExplainer(model.predict, shap.sample(scaled_input, 100))
+        explainer = shap.Explainer(model.predict, shap.sample(scaled_input, 100))
         shap_values = explainer.shap_values(scaled_input)
-        left_column.subheader('SHAP Feature Importance:')
-        left_column.pyplot(shap.force_plot(explainer.expected_value[0], shap_values[0], feature_names=FEATURE_NAMES))
+        shap_html = shap.force_plot(explainer.expected_value[0], shap_values[0], feature_names=FEATURE_NAMES, matplotlib=True)
+        components.html(shap_html.html(), height=300)
 
         actual = df['Measured ROP (m/h)']
         predicted = model.predict(scaler.transform(df.drop(columns=['Measured ROP (m/h)', 'Type of rock and descriptions', 'Tunnel stations (m)'])))
@@ -103,12 +104,14 @@ def main():
         left_column.subheader('Actual vs Predicted Plot:')
         left_column.plotly_chart(fig)
 
-   
-    right_column.dataframe(df.head())
 
-    if 'some_column' in df.columns:
-        right_column.subheader("Line Chart Example")
-        right_column.line_chart(df['some_column'])
+
+# Line chart for UCS (MPa) over the tunnel stations
+if 'UCS (MPa)' in df.columns:
+    right_column.subheader("UCS Trend Over Tunnel Stations")
+    fig_uc = px.line(df, x='Tunnel stations (m)', y='UCS (MPa)', title='UCS (MPa) over Tunnel Stations')
+    right_column.plotly_chart(fig_uc)
+
 
     # Clean up the temporary files
     os.remove(model_path)
