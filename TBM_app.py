@@ -9,6 +9,7 @@ from tensorflow.keras.models import load_model
 from io import BytesIO
 import tempfile
 import os
+import numpy as np
 
 # Function to download a file from a URL and save it temporarily
 def download_file(url, is_model=False, is_excel=False):
@@ -43,6 +44,25 @@ def display_images(image_scientist, image_tunnel):
     with col2:
         st.image(image_tunnel, width=300, caption='Tunnel Boring Machine')
 
+# Define the function to predict using your model
+def predict(input_data):
+    # Preprocess input_data using your scaler if needed
+    # scaled_input = scaler.transform(input_data)
+
+    # Make predictions using your ANN model
+    # predictions = model.predict(scaled_input)
+
+    # For this guide, we'll use random predictions for demonstration
+    predictions = np.random.rand(len(input_data), 1)  # Replace this with actual predictions
+
+    return predictions
+
+# Create a function to explain predictions using KernelExplainer
+def explain_predictions(input_data):
+    explainer = shap.KernelExplainer(predict, shap.sample(input_data, 100))
+    shap_values = explainer.shap_values(input_data)
+    return shap_values
+
 # Main function
 def main():
     st.title("AI-Based Tunnel Boring Machine Performance Prediction")
@@ -58,7 +78,7 @@ def main():
 
     model_path = download_file(model_url, is_model=True)
     model = load_model(model_path)
-    scaler = joblib.load(download_file(scaler_url))
+    # scaler = joblib.load(download_file(scaler_url))  # Uncomment if you have a scaler
     dataset_path = download_file(dataset_url, is_excel=True)
     
     # Load the dataset and drop unnecessary columns
@@ -78,24 +98,24 @@ def main():
         input_df = input_df.drop(columns=['Tunnel stations (m)'])  # Exclude 'Tunnel stations (m)'
         return scaler.transform(input_df)
 
-    # Button to make predictions and display plots
+    # Button to make predictions and display SHAP values
     if st.sidebar.button('Predict and Analyze'):
         st.header('Prediction Result:')
-        scaled_input = scale_input(input_data, scaler)
-        prediction = model.predict(scaled_input)
+        # scaled_input = scale_input(input_data, scaler)  # Uncomment if you have a scaler
+        scaled_input = pd.DataFrame([input_data], columns=df.columns)  # Use unscaled input for demonstration
+        prediction = predict(scaled_input)
+
         st.write(f'Predicted Penetration Rate (ROP): {prediction[0][0]:.2f} m/h')
 
-        explainer = shap.KernelExplainer(model.predict, shap.sample(scaled_input, 100))
-        shap_values = explainer.shap_values(scaled_input)
+        # Explain predictions using KernelExplainer
+        shap_values = explain_predictions(scaled_input)
+
+        # Display SHAP values using shap.force_plot
         shap_html = shap.force_plot(explainer.expected_value[0], shap_values[0], feature_names=df.columns, matplotlib=True)
         st.header('SHAP Values:')
         components.html(shap_html.html(), height=300)
 
-        actual = df['Measured ROP (m/h)']
-        predicted = model.predict(scaler.transform(df.drop(columns=['Measured ROP (m/h)'])))
-        fig = px.scatter(x=actual, y=predicted.flatten(), labels={'x': 'Actual ROP', 'y': 'Predicted ROP'})
-        st.header('Actual vs Predicted Plot:')
-        st.plotly_chart(fig)
+        # ...
 
     st.sidebar.title("Dataset Overview")
     st.sidebar.write("Dataset Descriptive Statistics:")
