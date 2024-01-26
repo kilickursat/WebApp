@@ -21,7 +21,7 @@ def load_images():
 
 # Display images at the top of the main page
 def display_images(image_scientist, image_tunnel):
-    col1, col2 = st.beta_columns([1, 1])
+    col1, col2 = st.columns([1, 1])  # Updated from st.beta_columns to st.columns
     with col1:
         st.image(image_scientist, width=300, caption='AI Scientist')
     with col2:
@@ -65,7 +65,7 @@ def main():
     df = pd.read_excel('path_to_your_dataset/TBM_Performance.xlsx')
 
     # Split the main screen into left and right
-    left_column, right_column = st.beta_columns(2)
+    left_column, right_column = st.columns(2)
 
     # Button to make predictions and display plots
     if st.sidebar.button('Predict and Analyze'):
