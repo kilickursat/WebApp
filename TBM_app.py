@@ -1,4 +1,3 @@
-import streamlit as st
 import pandas as pd
 import plotly.express as px
 import shap
@@ -6,12 +5,21 @@ import joblib
 import requests
 from tensorflow.keras.models import load_model
 from io import BytesIO
+import tempfile
+import streamlit as st
 
-# Function to download a file from a URL
-def download_file(url):
+# Function to download a file from a URL and save it temporarily
+def download_file(url, is_model=False):
     response = requests.get(url)
     response.raise_for_status()
-    return BytesIO(response.content)
+    if is_model:
+        # Use a temporary file for model
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.h5')
+        temp_file.write(response.content)
+        temp_file.close()
+        return temp_file.name
+    else:
+        return BytesIO(response.content)
 
 # Function to load images (adjust the path to where you've saved the images)
 def load_images():
@@ -37,9 +45,12 @@ def main():
     model_url = 'https://github.com/kilickursat/WebApp/raw/main/ann_model.h5'
     scaler_url = 'https://github.com/kilickursat/WebApp/raw/main/scaler.pkl'
 
-    model = load_model(download_file(model_url))
+    model_path = download_file(model_url, is_model=True)
+    model = load_model(model_path)
     scaler = joblib.load(download_file(scaler_url))
+    os.remove(model_path)
 
+    
     # Function to scale input features
     def scale_input(input_data, scaler):
         return scaler.transform(pd.DataFrame([input_data]))
