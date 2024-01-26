@@ -8,6 +8,7 @@ import requests
 from tensorflow.keras.models import load_model
 from io import BytesIO
 import tempfile
+from PIL import Image
 import os
 
 # Function to download a file from a URL and save it temporarily
