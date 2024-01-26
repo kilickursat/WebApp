@@ -89,7 +89,6 @@ def main():
         shap_values = explainer.shap_values(scaled_input)
         shap.summary_plot(shap_values, scaled_input, feature_names=FEATURE_NAMES)
 
-    # UCS over Tunnel Stations Plot on the main page
     if 'UCS (MPa)' in df.columns and 'Tunnel stations (m)' in df.columns:
         st.subheader("UCS Trend Over Tunnel Stations")
         fig_uc = px.line(df, x='Tunnel stations (m)', y='UCS (MPa)', title='UCS (MPa) over Tunnel Stations')
