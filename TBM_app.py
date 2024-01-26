@@ -9,6 +9,8 @@ from tensorflow.keras.models import load_model
 from PIL import Image
 import os
 import tempfile
+from io import BytesIO
+
 
 # Function to download a file from a URL and save it temporarily
 def download_file(url, is_model=False, is_excel=False):
