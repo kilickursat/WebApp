@@ -36,7 +36,7 @@ def load_images():
 
 # Display images at the top of the main page
 def display_images(image_scientist, image_tunnel):
-    col1, col2 = st.columns([1, 1])  # Updated from st.beta_columns to st.columns
+    col1, col2 = st.columns([1, 1])
     with col1:
         st.image(image_scientist, width=300, caption='AI Scientist')
     with col2:
@@ -58,16 +58,21 @@ def main():
     scaler = joblib.load(download_file(scaler_url))
     dataset_path = download_file(dataset_url, is_excel=True)
     
+    # Load the dataset and drop unnecessary columns
     df = pd.read_excel(dataset_path)
+    df.drop(columns=['Type of rock and descriptions', 'Measured ROP (m/h)', 'Tunnel stations (m)'], inplace=True)
 
-    # Correct feature names as per your model's training data
-    FEATURE_NAMES = ['UCS (MPa)', 'BTS (MPa)', 'Alpha angle (degrees)', 'DPW (m)', 'PSI (kN/mm)']
+    # Display descriptive statistics of the dataset
+    st.write("Dataset Descriptive Statistics:")
+    st.write(df.describe())
+
+    # Correct feature names as per the provided dataset
+    FEATURE_NAMES = ['UCS (MPa)', 'BTS (MPa)', 'PSI (kN/mm)', 'DPW (m)', 'Alpha angle (degrees)']
 
     # User input fields
     st.sidebar.header("Input Features")
     input_data = {}
     for feature in FEATURE_NAMES:
-        # Adjust the min_value, max_value, and value as per each feature's requirement
         input_data[feature] = st.sidebar.number_input(feature, min_value=0.0, max_value=100.0, value=50.0)
 
     # Function to scale input features
