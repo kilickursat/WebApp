@@ -103,7 +103,7 @@ def main():
         left_column.subheader('Actual vs Predicted Plot:')
         left_column.plotly_chart(fig)
 
-    right_column.subheader("Dataset Overview")
+   
     right_column.dataframe(df.head())
 
     if 'some_column' in df.columns:
