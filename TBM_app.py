@@ -1,3 +1,4 @@
+import streamlit as st
 import pandas as pd
 import plotly.express as px
 import shap
@@ -6,7 +7,6 @@ import requests
 from tensorflow.keras.models import load_model
 from io import BytesIO
 import tempfile
-import streamlit as st
 import os
 
 # Function to download a file from a URL and save it temporarily
@@ -60,25 +60,21 @@ def main():
     
     df = pd.read_excel(dataset_path)
 
-    # Function to scale input features
-    def scale_input(input_data, scaler):
-        return scaler.transform(pd.DataFrame([input_data]))
-
-    # Streamlit app layout
-    st.title("TBM Penetration Rate Prediction")
+    # Correct feature names as per your model's training data
+    FEATURE_NAMES = ['UCS (MPa)', 'BTS (MPa)', 'Alpha angle (degrees)', 'DPW (m)', 'PSI (kN/mm)']
 
     # User input fields
     st.sidebar.header("Input Features")
-    UCS = st.sidebar.number_input('UCS (MPa)', min_value=0.0, max_value=100.0, value=50.0)
-    BTS = st.sidebar.number_input('BTS (MPa)', min_value=0.0, max_value=100.0, value=50.0)
-    # Add more input fields as per your features
+    input_data = {}
+    for feature in FEATURE_NAMES:
+        # Adjust the min_value, max_value, and value as per each feature's requirement
+        input_data[feature] = st.sidebar.number_input(feature, min_value=0.0, max_value=100.0, value=50.0)
 
-    # Collect inputs
-    input_data = {
-        'UCS': UCS,
-        'BTS': BTS,
-        # Add other features here
-    }
+    # Function to scale input features
+    def scale_input(input_data, scaler):
+        # Ensure the order of the features matches the training data
+        input_df = pd.DataFrame([input_data], columns=FEATURE_NAMES)
+        return scaler.transform(input_df)
 
     # Split the main screen into left and right
     left_column, right_column = st.columns(2)
@@ -94,7 +90,7 @@ def main():
         explainer = shap.KernelExplainer(model.predict, shap.sample(scaled_input, 100))
         shap_values = explainer.shap_values(scaled_input)
         left_column.subheader('SHAP Feature Importance:')
-        left_column.pyplot(shap.force_plot(explainer.expected_value[0], shap_values[0], feature_names=list(input_data.keys())))
+        left_column.pyplot(shap.force_plot(explainer.expected_value[0], shap_values[0], feature_names=FEATURE_NAMES))
 
         actual = df['Measured ROP (m/h)']
         predicted = model.predict(scaler.transform(df.drop(columns=['Measured ROP (m/h)', 'Type of rock and descriptions', 'Tunnel stations (m)'])))
