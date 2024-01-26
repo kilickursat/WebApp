@@ -63,7 +63,7 @@ def main():
 
     # Load the dataset and drop unnecessary columns
     df = pd.read_excel(dataset_path)
-    df.drop(columns=['Type of rock and descriptions', 'Measured ROP (m/h)', 'Tunnel stations (m)'], inplace=True)
+    df.drop(columns=['Type of rock and descriptions', 'Measured ROP (m/h)'], inplace=True)
 
     # Display descriptive statistics of the dataset
     st.write("Dataset Descriptive Statistics:")
