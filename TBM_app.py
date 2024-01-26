@@ -6,10 +6,9 @@ import streamlit.components.v1 as components
 import joblib
 import requests
 from tensorflow.keras.models import load_model
-from io import BytesIO
-import tempfile
 from PIL import Image
 import os
+import tempfile
 
 # Function to download a file from a URL and save it temporarily
 def download_file(url, is_model=False, is_excel=False):
@@ -28,10 +27,10 @@ def download_file(url, is_model=False, is_excel=False):
     else:
         return BytesIO(response.content)
 
-# Function to load images
+# Function to load local images
 def load_images():
-    image_scientist = 'https://github.com/kilickursat/WebApp/blob/main/Leonardo_Diffusion_XL_An_AI_scientist_with_his_cuttingedge_tec_1.jpg'
-    image_tunnel = 'https://github.com/kilickursat/WebApp/blob/main/A__high_tech_tunnel_boring_machine_excavates_under_a_city_with_cross_sectional_view_GIF_format__Style-_Anime_seed-0ts-1705818285_idx-0.png'
+    image_scientist = Image.open('Leonardo_Diffusion_XL_An_AI_scientist_with_his_cuttingedge_tec_1.jpg')
+    image_tunnel = Image.open('A__high_tech_tunnel_boring_machine_excavates_under_a_city_with_cross_sectional_view_GIF_format__Style-_Anime_seed-0ts-1705818285_idx-0.png')
     return image_scientist, image_tunnel
 
 # Display images at the top of the main page
@@ -88,11 +87,11 @@ def main():
         shap_values = explainer.shap_values(scaled_input)
         shap.summary_plot(shap_values, scaled_input, feature_names=FEATURE_NAMES)
 
-    # Line chart for UCS (MPa) over the tunnel stations
-    if 'UCS (MPa)' in df.columns:
-        st.sidebar.subheader("UCS Trend Over Tunnel Stations")
-        fig_uc = px.line(df, x='UCS (MPa)', y='Tunnel stations (m)', title='UCS (MPa) over Tunnel Stations')
-        st.sidebar.plotly_chart(fig_uc)
+    # UCS over Tunnel Stations Plot on the main page
+    if 'UCS (MPa)' in df.columns and 'Tunnel stations (m)' in df.columns:
+        st.subheader("UCS Trend Over Tunnel Stations")
+        fig_uc = px.line(df, x='Tunnel stations (m)', y='UCS (MPa)', title='UCS (MPa) over Tunnel Stations')
+        st.plotly_chart(fig_uc)
 
     # Clean up the temporary files
     os.remove(model_path)
