@@ -82,11 +82,23 @@ def main():
         fig_uc = px.line(df, x='Tunnel stations (m)', y='UCS (MPa)', title='UCS (MPa) over Tunnel Stations')
         st.plotly_chart(fig_uc)
 
-    # Define feature names and input data
+    # Define feature names
     FEATURE_NAMES = ['UCS (MPa)', 'BTS (MPa)', 'PSI (kN/mm)', 'DPW (m)', 'Alpha angle (degrees)']
+
+    # Initialize input_data dictionary
     input_data = {}
+
+    # Set min and max values for each feature based on descriptive statistics
     for feature in FEATURE_NAMES:
-        input_data[feature] = st.sidebar.number_input(feature, min_value=0.0, max_value=100.0, value=50.0)
+        # Check if feature is in the dataframe
+        if feature in df.columns:
+            min_value = descriptive_stats.at['min', feature]
+            max_value = descriptive_stats.at['max', feature]
+            default_value = (min_value + max_value) / 2
+            input_data[feature] = st.sidebar.number_input(feature, min_value=min_value, max_value=max_value, value=default_value)
+        else:
+            st.sidebar.write(f"Feature {feature} not found in dataset.")
+            input_data[feature] = 0.0
 
     # Button to make predictions and display plots
     if st.sidebar.button('Predict and Analyze'):
