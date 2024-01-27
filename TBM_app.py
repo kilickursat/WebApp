@@ -92,8 +92,8 @@ def main():
     for feature in FEATURE_NAMES:
         # Check if feature is in the dataframe
         if feature in df.columns:
-            min_value = df.describe.at['min', feature]
-            max_value = df.describe.at['max', feature]
+            min_value = df.describe['min', feature]
+            max_value = df.describe['max', feature]
             default_value = (min_value + max_value) / 2
             input_data[feature] = st.sidebar.number_input(feature, min_value=min_value, max_value=max_value, value=default_value)
         else:
