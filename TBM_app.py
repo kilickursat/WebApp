@@ -67,6 +67,10 @@ def main():
 
     # Calculate descriptive statistics
     descriptive_stats = df.describe()
+    if 'UCS (MPa)' in df.columns and 'Tunnel stations (m)' in df.columns:
+        st.subheader("UCS Trend Over Tunnel Stations")
+        fig_uc = px.line(df, x='Tunnel stations (m)', y='UCS (MPa)', title='UCS (MPa) over Tunnel Stations')
+        st.plotly_chart(fig_uc)
 
     # Define feature names
     FEATURE_NAMES = ['UCS (MPa)', 'BTS (MPa)', 'PSI (kN/mm)', 'DPW (m)', 'Alpha angle (degrees)']
