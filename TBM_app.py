@@ -92,7 +92,12 @@ def main():
         # Display SHAP values using force plot
         explainer = shap.KernelExplainer(model.predict, shap.sample(scaled_input, 100))
         shap_values = explainer.shap_values(scaled_input)
-        shap.force_plot(explainer.expected_value, shap_values[0,:], FEATURE_NAMES, matplotlib=True)
+        
+        # Ensure shap_values is correctly indexed
+        if isinstance(shap_values, list):
+            shap_values = shap_values[0]
+
+        shap.force_plot(explainer.expected_value, shap_values, FEATURE_NAMES, matplotlib=True)
         st.pyplot(plt)  # Show the plot in Streamlit
 
         # Add Actual vs Predicted Plot
