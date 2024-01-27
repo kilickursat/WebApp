@@ -62,9 +62,16 @@ def main():
     scaler = joblib.load(download_file(scaler_url))
     dataset_path = download_file(dataset_url, is_excel=True)
 
-    # Load the dataset and drop unnecessary columns
+    # Load the dataset
     df = pd.read_excel(dataset_path)
-    df.drop(columns=['Type of rock and descriptions', 'Measured ROP (m/h)'], inplace=True)
+
+    # Ensure 'Measured ROP (m/h)' column exists
+    if 'Measured ROP (m/h)' not in df.columns:
+        st.error("Column 'Measured ROP (m/h)' not found in the dataset.")
+        return
+
+    # Drop unnecessary columns except 'Measured ROP (m/h)'
+    df.drop(columns=['Type of rock and descriptions'], inplace=True, errors='ignore')
 
     # Display descriptive statistics of the dataset
     st.write("Dataset Descriptive Statistics:")
