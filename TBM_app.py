@@ -65,22 +65,8 @@ def main():
     # Load the dataset
     df = pd.read_excel(dataset_path)
 
-    # Ensure 'Measured ROP (m/h)' column exists
-    if 'Measured ROP (m/h)' not in df.columns:
-        st.error("Column 'Measured ROP (m/h)' not found in the dataset.")
-        return
-
-    # Drop unnecessary columns except 'Measured ROP (m/h)'
-    df.drop(columns=['Type of rock and descriptions'], inplace=True, errors='ignore')
-
-    # Display descriptive statistics of the dataset
-    st.write("Dataset Descriptive Statistics:")
-    st.write(df.describe())
-
-    if 'UCS (MPa)' in df.columns and 'Tunnel stations (m)' in df.columns:
-        st.subheader("UCS Trend Over Tunnel Stations")
-        fig_uc = px.line(df, x='Tunnel stations (m)', y='UCS (MPa)', title='UCS (MPa) over Tunnel Stations')
-        st.plotly_chart(fig_uc)
+    # Calculate descriptive statistics
+    descriptive_stats = df.describe()
 
     # Define feature names
     FEATURE_NAMES = ['UCS (MPa)', 'BTS (MPa)', 'PSI (kN/mm)', 'DPW (m)', 'Alpha angle (degrees)']
@@ -90,10 +76,9 @@ def main():
 
     # Set min and max values for each feature based on descriptive statistics
     for feature in FEATURE_NAMES:
-        # Check if feature is in the dataframe
         if feature in df.columns:
-            min_value = df.describe['min', feature]
-            max_value = df.describe['max', feature]
+            min_value = descriptive_stats.at['min', feature]
+            max_value = descriptive_stats.at['max', feature]
             default_value = (min_value + max_value) / 2
             input_data[feature] = st.sidebar.number_input(feature, min_value=min_value, max_value=max_value, value=default_value)
         else:
