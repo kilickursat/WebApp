@@ -67,10 +67,6 @@ def main():
 
     # Calculate descriptive statistics
     descriptive_stats = df.describe()
-    if 'UCS (MPa)' in df.columns and 'Tunnel stations (m)' in df.columns:
-        st.subheader("UCS Trend Over Tunnel Stations")
-        fig_uc = px.line(df, x='Tunnel stations (m)', y='UCS (MPa)', title='UCS (MPa) over Tunnel Stations')
-        st.plotly_chart(fig_uc)
 
     # Define feature names
     FEATURE_NAMES = ['UCS (MPa)', 'BTS (MPa)', 'PSI (kN/mm)', 'DPW (m)', 'Alpha angle (degrees)']
@@ -93,20 +89,18 @@ def main():
     if st.sidebar.button('Predict and Analyze'):
         scaled_input = scale_input(input_data, scaler, FEATURE_NAMES)
         prediction = model.predict(scaled_input)
-
         st.subheader('Predicted Penetration Rate (ROP):')
         st.write(prediction[0][0])
 
-        # Display SHAP values using force plot
+        # Calculate SHAP values
         explainer = shap.KernelExplainer(model.predict, shap.sample(scaled_input, 100))
         shap_values = explainer.shap_values(scaled_input)
         
-        # Ensure shap_values is correctly indexed
+        # Create a SHAP bar plot
         if isinstance(shap_values, list):
             shap_values = shap_values[0]
-
-        shap.force_plot(explainer.expected_value, shap_values, FEATURE_NAMES, matplotlib=True)
-        st.pyplot(plt)  # Show the plot in Streamlit
+        shap.summary_plot(shap_values, FEATURE_NAMES, plot_type="bar")
+        st.pyplot(plt)  # Display the plot in Streamlit
 
         # Add Actual vs Predicted Plot
         actual = df['Measured ROP (m/h)']
