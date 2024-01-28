@@ -53,7 +53,7 @@ def scale_input(input_data, scaler, FEATURE_NAMES):
 def main():
     st.title("Tunnel Boring Machine Performance Predictor")
     st.sidebar.header("User Input Features")
-    st.markdown("## Descriptive Analysis & Predictions")
+    st.markdown("## Created by Kursat Kilic")
 
     image_scientist, image_tunnel = load_images()
     display_images(image_scientist, image_tunnel)
