@@ -78,10 +78,10 @@ def main():
     # Set min and max values for each feature based on descriptive statistics
     for feature in FEATURE_NAMES:
         if feature in df.columns:
-            min_value = df[feature].min()
-            max_value = df[feature].max()
-            default_value = (min_value + max_value) / 2
-            input_data[feature] = st.sidebar.number_input(feature, min_value=min_value, max_value=max_value, value=default_value)
+            min_value = float(df[feature].min())
+            max_value = float(df[feature].max())
+            default_value = (min_value + max_value) / 2.0
+            input_data[feature] = st.sidebar.number_input(feature, min_value=min_value, max_value=max_value, value=default_value, step=None)
         else:
             st.sidebar.write(f"Feature {feature} not found in dataset.")
             input_data[feature] = 0.0
