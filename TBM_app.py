@@ -93,13 +93,13 @@ def main():
         st.subheader('Predicted Penetration Rate (ROP):')
         st.write(prediction[0][0])
 
-        # Calculate SHAP values
+        # Calculate SHAP values using the Explainer
         explainer = shap.Explainer(model, scaler.transform(df[FEATURE_NAMES]))
-        shap_values = explainer.shap_values(scaler.transform(df[FEATURE_NAMES]))
+        shap_values = explainer(scaler.transform(df[FEATURE_NAMES]))
 
         # Create a SHAP bar plot
         st.subheader('Feature Importance:')
-        shap.summary_plot(shap_values, df[FEATURE_NAMES], plot_type="bar", show=False)
+        shap.summary_plot(shap_values.values, df[FEATURE_NAMES], plot_type="bar", show=False)
         st.pyplot(plt.gcf())
 
         # Add Actual vs Predicted Plot
