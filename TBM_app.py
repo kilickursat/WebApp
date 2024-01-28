@@ -118,12 +118,9 @@ def main():
     FEATURE_NAMES = ['UCS (MPa)', 'BTS (MPa)', 'PSI (kN/mm)', 'DPW (m)', 'Alpha angle (degrees)']
     input_data = create_sidebar(FEATURE_NAMES, df)
 
-    # Adjusted layout for descriptive statistics and combined plot
-    col1, col2 = st.columns([2, 3])  # Adjust column ratios as needed
-    with col1:
-        display_dataset_statistics(df)
-    with col2:
-        plot_all_features_vs_tunnel_stations(df, FEATURE_NAMES)
+    # Descriptive statistics and combined plot in a vertical layout
+    display_dataset_statistics(df)
+    plot_all_features_vs_tunnel_stations(df, FEATURE_NAMES)
 
     if st.sidebar.button('Predict and Analyze'):
         with st.spinner('Calculating Predictions...'):
