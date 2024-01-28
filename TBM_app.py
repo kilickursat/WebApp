@@ -29,6 +29,8 @@ def download_file(url, is_model=False, is_excel=False):
     else:
         return BytesIO(response.content)
 
+
+
 # Function to load local images
 def load_images():
     image_scientist = Image.open('Leonardo_Diffusion_XL_An_AI_scientist_with_his_cuttingedge_tec_1.jpg')
@@ -62,7 +64,15 @@ def create_sidebar(FEATURE_NAMES, df):
 # Function to display the header
 def display_header():
     st.title("Tunnel Boring Machine Performance Predictor")
-    st.markdown("## Descriptive Analysis, Predictions & Feature Trends")
+    st.markdown('''
+    # **Tunnel Boring Machine Performance Predictor**
+
+    This is the **Tunnel Boring Machine Performance Predictor** created in Streamlit using the **Grimoire GPT** and **ANN Regressor** libraries.
+
+    **Credit:** App built in `Python` + `Streamlit Cloud` + `Grimoire GPT` + `ANN` by [Kursat Kilic](https://github.com/kilickursat) (Researcher for TUST&AI field)
+
+    ---
+''')
 
 # Function to display dataset statistics
 def display_dataset_statistics(df):
