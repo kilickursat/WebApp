@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
-import plotly.graph_objs as go
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 import shap
 import joblib
 from tensorflow.keras.models import load_model
@@ -8,9 +9,7 @@ from PIL import Image
 import os
 import tempfile
 from io import BytesIO
-import matplotlib.pyplot as plt
 import requests
-import numpy as np
 
 # Function to download a file from a URL and save it temporarily
 def download_file(url, is_model=False, is_excel=False):
@@ -28,8 +27,6 @@ def download_file(url, is_model=False, is_excel=False):
         return temp_file.name
     else:
         return BytesIO(response.content)
-
-
 
 # Function to load local images
 def load_images():
@@ -63,16 +60,8 @@ def create_sidebar(FEATURE_NAMES, df):
 
 # Function to display the header
 def display_header():
-    
-    st.markdown('''
-    # **Tunnel Boring Machine Performance Predictor**
-
-    This is the **Tunnel Boring Machine Performance Predictor** created in Streamlit using the **Grimoire GPT** and **ANN Regressor** libraries.
-
-    **Credit:** App built in `Python` + `Streamlit Cloud` + `Grimoire GPT` + `ANN` by [Kursat Kilic](https://github.com/kilickursat) (Researcher for TUST&AI field)
-
-    ---
-''')
+    st.title("Tunnel Boring Machine Performance Predictor")
+    st.markdown("## Descriptive Analysis, Predictions & Feature Trends")
 
 # Function to display dataset statistics
 def display_dataset_statistics(df):
@@ -91,20 +80,38 @@ def plot_feature_importance(model, scaler, df, FEATURE_NAMES):
 def plot_actual_vs_predicted(model, scaler, df, FEATURE_NAMES):
     actual = df['Measured ROP (m/h)']
     predicted = model.predict(scaler.transform(df[FEATURE_NAMES])).flatten()
-    fig_act_vs_pred = go.Figure(data=[
-        go.Scatter(x=actual, y=predicted, mode='markers', name='Predicted vs Actual'),
-        go.Scatter(x=actual, y=actual, mode='lines', name='Ideal')
-    ])
-    fig_act_vs_pred.update_layout(title='Actual vs Predicted ROP', xaxis_title='Actual ROP', yaxis_title='Predicted ROP')
-    st.plotly_chart(fig_act_vs_pred)
+    fig_act_vs_pred = plt.figure()
+    plt.scatter(actual, predicted, label='Predicted vs Actual')
+    plt.plot(actual, actual, color='red', label='Ideal')
+    plt.title('Actual vs Predicted ROP')
+    plt.xlabel('Actual ROP')
+    plt.ylabel('Predicted ROP')
+    plt.legend()
+    st.pyplot(fig_act_vs_pred)
 
-# Function to plot all features vs tunnel stations
+# Function to plot all features vs tunnel stations with twinx for specific features
 def plot_all_features_vs_tunnel_stations(df, FEATURE_NAMES):
-    fig = go.Figure()
-    for feature in FEATURE_NAMES:
-        fig.add_trace(go.Scatter(x=df['Tunnel stations (m)'], y=df[feature], mode='lines', name=feature))
-    fig.update_layout(title="All Features over Tunnel Stations", xaxis_title="Tunnel Stations (m)", yaxis_title="Feature Values")
-    st.plotly_chart(fig, use_container_width=True)
+    fig, ax1 = plt.subplots(figsize=(10, 6))
+
+    # Plotting features with normal range on primary y-axis
+    primary_features = ['UCS (MPa)', 'PSI (kN/mm)', 'Alpha angle (degrees)']
+    for feature in primary_features:
+        ax1.plot(df['Tunnel stations (m)'], df[feature], label=feature)
+
+    # Secondary y-axis for features with low range
+    ax2 = ax1.twinx()
+    secondary_features = ['DPW (m)', 'BTS (MPa)']
+    for feature in secondary_features:
+        ax2.plot(df['Tunnel stations (m)'], df[feature], label=feature, linestyle='--')
+
+    ax1.set_xlabel('Tunnel Stations (m)')
+    ax1.set_ylabel('Primary Features')
+    ax2.set_ylabel('Secondary Features (Low Range)')
+    ax1.legend(loc='upper left')
+    ax2.legend(loc='upper right')
+    ax1.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
+
+    st.pyplot(fig)
 
 # Main function
 def main():
@@ -128,7 +135,6 @@ def main():
     FEATURE_NAMES = ['UCS (MPa)', 'BTS (MPa)', 'PSI (kN/mm)', 'DPW (m)', 'Alpha angle (degrees)']
     input_data = create_sidebar(FEATURE_NAMES, df)
 
-    # Descriptive statistics and combined plot in a vertical layout
     display_dataset_statistics(df)
     plot_all_features_vs_tunnel_stations(df, FEATURE_NAMES)
 
