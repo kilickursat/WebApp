@@ -65,8 +65,9 @@ def main():
     # Load the dataset
     df = pd.read_excel(dataset_path)
 
-    # Calculate descriptive statistics
-    descriptive_stats = df.describe()
+    # Display descriptive statistics of the dataset
+    st.write("Dataset Descriptive Statistics:")
+    st.dataframe(df.describe())
 
     # Define feature names
     FEATURE_NAMES = ['UCS (MPa)', 'BTS (MPa)', 'PSI (kN/mm)', 'DPW (m)', 'Alpha angle (degrees)']
@@ -77,8 +78,8 @@ def main():
     # Set min and max values for each feature based on descriptive statistics
     for feature in FEATURE_NAMES:
         if feature in df.columns:
-            min_value = descriptive_stats.at['min', feature]
-            max_value = descriptive_stats.at['max', feature]
+            min_value = df[feature].min()
+            max_value = df[feature].max()
             default_value = (min_value + max_value) / 2
             input_data[feature] = st.sidebar.number_input(feature, min_value=min_value, max_value=max_value, value=default_value)
         else:
@@ -93,14 +94,13 @@ def main():
         st.write(prediction[0][0])
 
         # Calculate SHAP values
-        explainer = shap.KernelExplainer(model.predict, shap.sample(scaled_input, 100))
-        shap_values = explainer.shap_values(scaled_input)
-        
+        explainer = shap.Explainer(model, scaler.transform(df[FEATURE_NAMES]))
+        shap_values = explainer.shap_values(scaler.transform(df[FEATURE_NAMES]))
+
         # Create a SHAP bar plot
-        if isinstance(shap_values, list):
-            shap_values = shap_values[0]
-        shap.summary_plot(shap_values, FEATURE_NAMES, plot_type="bar")
-        st.pyplot(plt)  # Display the plot in Streamlit
+        st.subheader('Feature Importance:')
+        shap.summary_plot(shap_values, df[FEATURE_NAMES], plot_type="bar", show=False)
+        st.pyplot(plt.gcf())
 
         # Add Actual vs Predicted Plot
         actual = df['Measured ROP (m/h)']
