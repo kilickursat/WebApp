@@ -63,7 +63,7 @@ def create_sidebar(FEATURE_NAMES, df):
 def display_header():
     
     st.markdown('''
-    # **The TBM EDA App**
+    # **The TBM Penetration Rate Predictor - Hard Rock Features App**
 
     This is the **Tunnel Boring Machine Performance PredictorApp** created in Streamlit using the **Grimoire GPT** and **ANN Tensorflow** libraries.
 
