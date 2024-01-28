@@ -63,7 +63,7 @@ def create_sidebar(FEATURE_NAMES, df):
 
 # Function to display the header
 def display_header():
-    st.title("Tunnel Boring Machine Performance Predictor")
+    
     st.markdown('''
     # **Tunnel Boring Machine Performance Predictor**
 
