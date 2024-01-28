@@ -98,7 +98,7 @@ def plot_all_features_vs_tunnel_stations(df, FEATURE_NAMES):
 
 # Main function
 def main():
-    st.set_page_config(layout="wide")  # Set to wide layout
+    st.set_page_config(layout="wide")
     display_header()
     image_scientist, image_tunnel = load_images()
     display_images(image_scientist, image_tunnel)
@@ -118,12 +118,10 @@ def main():
     FEATURE_NAMES = ['UCS (MPa)', 'BTS (MPa)', 'PSI (kN/mm)', 'DPW (m)', 'Alpha angle (degrees)']
     input_data = create_sidebar(FEATURE_NAMES, df)
 
-    # Layout for descriptive statistics enlarged
-    col1, col2 = st.columns([3, 1])
+    # Adjusted layout for descriptive statistics and combined plot
+    col1, col2 = st.columns([2, 3])  # Adjust column ratios as needed
     with col1:
         display_dataset_statistics(df)
-
-    # Plot all features vs tunnel stations
     with col2:
         plot_all_features_vs_tunnel_stations(df, FEATURE_NAMES)
 
@@ -134,7 +132,7 @@ def main():
             st.subheader('Predicted Penetration Rate (ROP):')
             st.write(prediction[0][0])
 
-            # Layout for SHAP and Actual vs Predicted plots
+            # SHAP and Actual vs Predicted plots
             col3, col4 = st.columns(2)
             with col3:
                 plot_feature_importance(model, scaler, df, FEATURE_NAMES)
