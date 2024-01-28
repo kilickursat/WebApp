@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objs as go
 import shap
 import joblib
@@ -82,11 +81,20 @@ def plot_feature_importance(model, scaler, df, FEATURE_NAMES):
 def plot_actual_vs_predicted(model, scaler, df, FEATURE_NAMES):
     actual = df['Measured ROP (m/h)']
     predicted = model.predict(scaler.transform(df[FEATURE_NAMES])).flatten()
-    fig_act_vs_pred = px.scatter(x=actual, y=predicted, labels={'x': 'Actual ROP', 'y': 'Predicted ROP'})
-    best_fit = np.polyfit(actual, predicted, 1)
-    best_fit_line = go.Scatter(x=actual, y=np.polyval(best_fit, actual), mode='lines', name='Best Fit Line')
-    fig_act_vs_pred.add_trace(best_fit_line)
+    fig_act_vs_pred = go.Figure(data=[
+        go.Scatter(x=actual, y=predicted, mode='markers', name='Predicted vs Actual'),
+        go.Scatter(x=actual, y=actual, mode='lines', name='Ideal')
+    ])
+    fig_act_vs_pred.update_layout(title='Actual vs Predicted ROP', xaxis_title='Actual ROP', yaxis_title='Predicted ROP')
     st.plotly_chart(fig_act_vs_pred)
+
+# Function to plot all features vs tunnel stations
+def plot_all_features_vs_tunnel_stations(df, FEATURE_NAMES):
+    fig = go.Figure()
+    for feature in FEATURE_NAMES:
+        fig.add_trace(go.Scatter(x=df['Tunnel stations (m)'], y=df[feature], mode='lines', name=feature))
+    fig.update_layout(title="All Features over Tunnel Stations", xaxis_title="Tunnel Stations (m)", yaxis_title="Feature Values")
+    st.plotly_chart(fig, use_container_width=True)
 
 # Main function
 def main():
@@ -110,24 +118,14 @@ def main():
     FEATURE_NAMES = ['UCS (MPa)', 'BTS (MPa)', 'PSI (kN/mm)', 'DPW (m)', 'Alpha angle (degrees)']
     input_data = create_sidebar(FEATURE_NAMES, df)
 
-    # Layout for descriptive statistics
-    col1, col2 = st.columns(2)
+    # Layout for descriptive statistics enlarged
+    col1, col2 = st.columns([3, 1])
     with col1:
         display_dataset_statistics(df)
 
-    # Layout for feature trends
-    col3, col4 = st.columns(2)
-    with col3:
-        for feature in FEATURE_NAMES[:len(FEATURE_NAMES)//2]:  # First half of features
-            if feature in df.columns:
-                fig = px.line(df, x='Tunnel stations (m)', y=feature, title=f'{feature} over Tunnel Stations')
-                st.plotly_chart(fig)
-
-    with col4:
-        for feature in FEATURE_NAMES[len(FEATURE_NAMES)//2:]:  # Second half of features
-            if feature in df.columns:
-                fig = px.line(df, x='Tunnel stations (m)', y=feature, title=f'{feature} over Tunnel Stations')
-                st.plotly_chart(fig)
+    # Plot all features vs tunnel stations
+    with col2:
+        plot_all_features_vs_tunnel_stations(df, FEATURE_NAMES)
 
     if st.sidebar.button('Predict and Analyze'):
         with st.spinner('Calculating Predictions...'):
@@ -137,10 +135,10 @@ def main():
             st.write(prediction[0][0])
 
             # Layout for SHAP and Actual vs Predicted plots
-            col5, col6 = st.columns(2)
-            with col5:
+            col3, col4 = st.columns(2)
+            with col3:
                 plot_feature_importance(model, scaler, df, FEATURE_NAMES)
-            with col6:
+            with col4:
                 plot_actual_vs_predicted(model, scaler, df, FEATURE_NAMES)
 
     # Add dataset link
