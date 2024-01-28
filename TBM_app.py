@@ -88,6 +88,13 @@ def plot_actual_vs_predicted(model, scaler, df, FEATURE_NAMES):
     fig_act_vs_pred.add_trace(best_fit_line)
     st.plotly_chart(fig_act_vs_pred)
 
+# Function to plot features vs tunnel stations
+def plot_features_vs_tunnel_stations(df, FEATURE_NAMES):
+    for feature in FEATURE_NAMES:
+        if feature in df.columns:
+            fig = px.line(df, x='Tunnel stations (m)', y=feature, title=f'{feature} over Tunnel Stations')
+            st.plotly_chart(fig)
+
 # Main function
 def main():
     st.set_page_config(layout="wide")  # Set to wide layout
@@ -111,6 +118,13 @@ def main():
     input_data = create_sidebar(FEATURE_NAMES, df)
     display_dataset_statistics(df)
 
+    # Horizontal layout for descriptive table and feature trends
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        display_dataset_statistics(df)
+    with col2:
+        plot_features_vs_tunnel_stations(df, FEATURE_NAMES)
+
     if st.sidebar.button('Predict and Analyze'):
         with st.spinner('Calculating Predictions...'):
             scaled_input = scale_input(input_data, scaler, FEATURE_NAMES)
@@ -118,9 +132,12 @@ def main():
             st.subheader('Predicted Penetration Rate (ROP):')
             st.write(prediction[0][0])
 
-            plot_feature_importance(model, scaler, df, FEATURE_NAMES)
-
-            plot_actual_vs_predicted(model, scaler, df, FEATURE_NAMES)
+            # SHAP and Actual vs Predicted plots
+            col3, col4 = st.columns([1, 1])
+            with col3:
+                plot_feature_importance(model, scaler, df, FEATURE_NAMES)
+            with col4:
+                plot_actual_vs_predicted(model, scaler, df, FEATURE_NAMES)
 
     # Add dataset link
     st.markdown("### Dataset Reference:")
