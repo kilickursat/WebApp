@@ -13,7 +13,7 @@ import tempfile
 from io import BytesIO
 import matplotlib.pyplot as plt
 
-/* Custom CSS */
+
 <style>
   .reportview-container {
     font-family: "Arial, sans-serif";
