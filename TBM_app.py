@@ -4,17 +4,14 @@ import plotly.express as px
 import plotly.graph_objs as go
 import shap
 import joblib
-import numpy as np
-import requests
 from tensorflow.keras.models import load_model
 from PIL import Image
 import os
 import tempfile
 from io import BytesIO
 import matplotlib.pyplot as plt
-
-
-
+import requests
+import numpy as np
 
 # Function to download a file from a URL and save it temporarily
 def download_file(url, is_model=False, is_excel=False):
@@ -52,12 +49,49 @@ def scale_input(input_data, scaler, FEATURE_NAMES):
     input_df = pd.DataFrame([input_data], columns=FEATURE_NAMES)
     return scaler.transform(input_df)
 
-# Main function
-def main():
-    st.title("Tunnel Boring Machine Performance Predictor")
+# Function to create the sidebar
+def create_sidebar(FEATURE_NAMES, df):
     st.sidebar.header("User Input Features")
+    input_data = {}
+    for feature in FEATURE_NAMES:
+        min_value = float(df[feature].min())
+        max_value = float(df[feature].max())
+        default_value = (min_value + max_value) / 2.0
+        input_data[feature] = st.sidebar.number_input(f"{feature} (Min: {min_value}, Max: {max_value})", min_value=min_value, max_value=max_value, value=default_value)
+    return input_data
+
+# Function to display the header
+def display_header():
+    st.title("Tunnel Boring Machine Performance Predictor")
     st.markdown("## Descriptive Analysis, Predictions & Feature Trends")
 
+# Function to display dataset statistics
+def display_dataset_statistics(df):
+    st.write("Dataset Descriptive Statistics:")
+    st.dataframe(df.describe())
+
+# Function to plot feature importance
+def plot_feature_importance(model, scaler, df, FEATURE_NAMES):
+    explainer = shap.Explainer(model, scaler.transform(df[FEATURE_NAMES]))
+    shap_values = explainer(scaler.transform(df[FEATURE_NAMES]))
+    st.subheader('Feature Importance:')
+    shap.summary_plot(shap_values.values, df[FEATURE_NAMES], plot_type="bar", show=False)
+    st.pyplot(plt.gcf())
+
+# Function to plot actual vs predicted
+def plot_actual_vs_predicted(model, scaler, df, FEATURE_NAMES):
+    actual = df['Measured ROP (m/h)']
+    predicted = model.predict(scaler.transform(df[FEATURE_NAMES])).flatten()
+    fig_act_vs_pred = px.scatter(x=actual, y=predicted, labels={'x': 'Actual ROP', 'y': 'Predicted ROP'})
+    best_fit = np.polyfit(actual, predicted, 1)
+    best_fit_line = go.Scatter(x=actual, y=np.polyval(best_fit, actual), mode='lines', name='Best Fit Line')
+    fig_act_vs_pred.add_trace(best_fit_line)
+    st.plotly_chart(fig_act_vs_pred)
+
+# Main function
+def main():
+    st.set_page_config(layout="wide")  # Set to wide layout
+    display_header()
     image_scientist, image_tunnel = load_images()
     display_images(image_scientist, image_tunnel)
 
@@ -72,16 +106,10 @@ def main():
         dataset_path = download_file(dataset_url, is_excel=True)
 
         df = pd.read_excel(dataset_path)
-        st.write("Dataset Descriptive Statistics:")
-        st.dataframe(df.describe())
 
     FEATURE_NAMES = ['UCS (MPa)', 'BTS (MPa)', 'PSI (kN/mm)', 'DPW (m)', 'Alpha angle (degrees)']
-    input_data = {}
-    for feature in FEATURE_NAMES:
-        min_value = float(df[feature].min())
-        max_value = float(df[feature].max())
-        default_value = (min_value + max_value) / 2.0
-        input_data[feature] = st.sidebar.number_input(f"{feature} (Min: {min_value}, Max: {max_value})", min_value=min_value, max_value=max_value, value=default_value)
+    input_data = create_sidebar(FEATURE_NAMES, df)
+    display_dataset_statistics(df)
 
     if st.sidebar.button('Predict and Analyze'):
         with st.spinner('Calculating Predictions...'):
@@ -90,27 +118,13 @@ def main():
             st.subheader('Predicted Penetration Rate (ROP):')
             st.write(prediction[0][0])
 
-            explainer = shap.Explainer(model, scaler.transform(df[FEATURE_NAMES]))
-            shap_values = explainer(scaler.transform(df[FEATURE_NAMES]))
+            plot_feature_importance(model, scaler, df, FEATURE_NAMES)
 
-            st.subheader('Feature Importance:')
-            shap.summary_plot(shap_values.values, df[FEATURE_NAMES], plot_type="bar", show=False)
-            st.pyplot(plt.gcf())
+            plot_actual_vs_predicted(model, scaler, df, FEATURE_NAMES)
 
-        with st.spinner('Generating Actual vs Predicted Plot...'):
-            actual = df['Measured ROP (m/h)']
-            predicted = model.predict(scaler.transform(df[FEATURE_NAMES])).flatten()
-            fig_act_vs_pred = px.scatter(x=actual, y=predicted, labels={'x': 'Actual ROP', 'y': 'Predicted ROP'})
-            best_fit = np.polyfit(actual, predicted, 1)
-            best_fit_line = go.Scatter(x=actual, y=np.polyval(best_fit, actual), mode='lines', name='Best Fit Line')
-            fig_act_vs_pred.add_trace(best_fit_line)
-            st.plotly_chart(fig_act_vs_pred)
-
-        with st.spinner('Generating Feature Trends...'):
-            for feature in FEATURE_NAMES:
-                if feature in df.columns:
-                    fig = px.line(df, x='Tunnel stations (m)', y=feature, title=f'{feature} over Tunnel Stations')
-                    st.plotly_chart(fig)
+    # Add dataset link
+    st.markdown("### Dataset Reference:")
+    st.markdown("[Tunnel Boring Machine Performance Analysis](https://www.sciencedirect.com/science/article/pii/S0886779807000508)")
 
     os.remove(model_path)
     os.remove(dataset_path)
