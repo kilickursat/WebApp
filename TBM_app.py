@@ -53,13 +53,12 @@ def scale_input(input_data, scaler, FEATURE_NAMES):
 def main():
     st.title("Tunnel Boring Machine Performance Predictor")
     st.sidebar.header("User Input Features")
-    st.markdown("## Created by Kursat Kilic")
+    st.markdown("## Descriptive Analysis, Predictions & Feature Trends")
 
     image_scientist, image_tunnel = load_images()
     display_images(image_scientist, image_tunnel)
 
     with st.spinner('Loading Model and Data...'):
-        # Download and load the trained model and scaler
         model_url = 'https://github.com/kilickursat/WebApp/raw/main/ann_model.h5'
         scaler_url = 'https://github.com/kilickursat/WebApp/raw/main/scaler.pkl'
         dataset_url = 'https://github.com/kilickursat/WebApp/raw/main/TBM_Performance.xlsx'
@@ -69,14 +68,11 @@ def main():
         scaler = joblib.load(download_file(scaler_url))
         dataset_path = download_file(dataset_url, is_excel=True)
 
-        # Load the dataset
         df = pd.read_excel(dataset_path)
         st.write("Dataset Descriptive Statistics:")
         st.dataframe(df.describe())
 
-    # Define feature names
     FEATURE_NAMES = ['UCS (MPa)', 'BTS (MPa)', 'PSI (kN/mm)', 'DPW (m)', 'Alpha angle (degrees)']
-
     input_data = {}
     for feature in FEATURE_NAMES:
         min_value = float(df[feature].min())
@@ -91,7 +87,6 @@ def main():
             st.subheader('Predicted Penetration Rate (ROP):')
             st.write(prediction[0][0])
 
-            # SHAP values calculation
             explainer = shap.Explainer(model, scaler.transform(df[FEATURE_NAMES]))
             shap_values = explainer(scaler.transform(df[FEATURE_NAMES]))
 
@@ -108,7 +103,12 @@ def main():
             fig_act_vs_pred.add_trace(best_fit_line)
             st.plotly_chart(fig_act_vs_pred)
 
-    # Clean up the temporary files
+        with st.spinner('Generating Feature Trends...'):
+            for feature in FEATURE_NAMES:
+                if feature in df.columns:
+                    fig = px.line(df, x='Tunnel stations (m)', y=feature, title=f'{feature} over Tunnel Stations')
+                    st.plotly_chart(fig)
+
     os.remove(model_path)
     os.remove(dataset_path)
 
