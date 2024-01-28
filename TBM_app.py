@@ -88,13 +88,6 @@ def plot_actual_vs_predicted(model, scaler, df, FEATURE_NAMES):
     fig_act_vs_pred.add_trace(best_fit_line)
     st.plotly_chart(fig_act_vs_pred)
 
-# Function to plot features vs tunnel stations
-def plot_features_vs_tunnel_stations(df, FEATURE_NAMES):
-    for feature in FEATURE_NAMES:
-        if feature in df.columns:
-            fig = px.line(df, x='Tunnel stations (m)', y=feature, title=f'{feature} over Tunnel Stations')
-            st.plotly_chart(fig)
-
 # Main function
 def main():
     st.set_page_config(layout="wide")  # Set to wide layout
@@ -117,12 +110,24 @@ def main():
     FEATURE_NAMES = ['UCS (MPa)', 'BTS (MPa)', 'PSI (kN/mm)', 'DPW (m)', 'Alpha angle (degrees)']
     input_data = create_sidebar(FEATURE_NAMES, df)
 
-    # Layout for descriptive table and feature trends
-    col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
+    # Layout for descriptive statistics
+    col1, col2 = st.columns(2)
     with col1:
         display_dataset_statistics(df)
-    with col2:
-        plot_features_vs_tunnel_stations(df, FEATURE_NAMES)
+
+    # Layout for feature trends
+    col3, col4 = st.columns(2)
+    with col3:
+        for feature in FEATURE_NAMES[:len(FEATURE_NAMES)//2]:  # First half of features
+            if feature in df.columns:
+                fig = px.line(df, x='Tunnel stations (m)', y=feature, title=f'{feature} over Tunnel Stations')
+                st.plotly_chart(fig)
+
+    with col4:
+        for feature in FEATURE_NAMES[len(FEATURE_NAMES)//2:]:  # Second half of features
+            if feature in df.columns:
+                fig = px.line(df, x='Tunnel stations (m)', y=feature, title=f'{feature} over Tunnel Stations')
+                st.plotly_chart(fig)
 
     if st.sidebar.button('Predict and Analyze'):
         with st.spinner('Calculating Predictions...'):
@@ -131,10 +136,11 @@ def main():
             st.subheader('Predicted Penetration Rate (ROP):')
             st.write(prediction[0][0])
 
-            # SHAP and Actual vs Predicted plots
-            with col3:
+            # Layout for SHAP and Actual vs Predicted plots
+            col5, col6 = st.columns(2)
+            with col5:
                 plot_feature_importance(model, scaler, df, FEATURE_NAMES)
-            with col4:
+            with col6:
                 plot_actual_vs_predicted(model, scaler, df, FEATURE_NAMES)
 
     # Add dataset link
