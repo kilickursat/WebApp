@@ -13,6 +13,31 @@ import tempfile
 from io import BytesIO
 import matplotlib.pyplot as plt
 
+/* Custom CSS */
+<style>
+  .reportview-container {
+    font-family: "Arial, sans-serif";
+    background-color: #f4f4f4;
+  }
+  .sidebar .sidebar-content {
+    background-color: #f0f0f0;
+    padding: 10px;
+  }
+  h1 {
+    color: #4a4a4a;
+  }
+  .stButton > button {
+    color: white;
+    background-color: #0083B8;
+    border-radius: 5px;
+    padding: 10px 24px;
+  }
+  .stMarkdown {
+    font-size: 16px;
+  }
+</style>
+
+
 # Function to download a file from a URL and save it temporarily
 def download_file(url, is_model=False, is_excel=False):
     response = requests.get(url)
