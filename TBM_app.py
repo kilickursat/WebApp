@@ -116,10 +116,9 @@ def main():
 
     FEATURE_NAMES = ['UCS (MPa)', 'BTS (MPa)', 'PSI (kN/mm)', 'DPW (m)', 'Alpha angle (degrees)']
     input_data = create_sidebar(FEATURE_NAMES, df)
-    display_dataset_statistics(df)
 
-    # Horizontal layout for descriptive table and feature trends
-    col1, col2 = st.columns([1, 1])
+    # Layout for descriptive table and feature trends
+    col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
     with col1:
         display_dataset_statistics(df)
     with col2:
@@ -133,7 +132,6 @@ def main():
             st.write(prediction[0][0])
 
             # SHAP and Actual vs Predicted plots
-            col3, col4 = st.columns([1, 1])
             with col3:
                 plot_feature_importance(model, scaler, df, FEATURE_NAMES)
             with col4:
