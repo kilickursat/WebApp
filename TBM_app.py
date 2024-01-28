@@ -61,8 +61,16 @@ def create_sidebar(FEATURE_NAMES, df):
 
 # Function to display the header
 def display_header():
-    st.title("Tunnel Boring Machine Performance Predictor")
-    st.markdown("## Descriptive Analysis, Predictions & Feature Trends")
+    
+    st.markdown('''
+    # **The TBM EDA App**
+
+    This is the **Tunnel Boring Machine Performance PredictorApp** created in Streamlit using the **Grimoire GPT** and **ANN Tensorflow** libraries.
+
+    **Credit:** App built in `Python` + `Streamlit Cloud` + `Grimoire GPT` + `ANN` by [Kursat Kilic](https://github.com/kilickursat) (Geotech Digitalization)
+
+    ---
+''')
 
 # Function to display dataset statistics
 def display_dataset_statistics(df):
